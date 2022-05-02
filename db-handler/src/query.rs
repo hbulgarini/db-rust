@@ -1,32 +1,42 @@
 use crate::connection::{DBConnection, DBCalls};
-use std::collections::HashMap;
+use core::num::flt2dec::Decoded;
+use std::{collections::BTreeMap, io::Read, io::Write};
+use std::io::BufWriter;
 use std::fmt::Debug;
-use serde::{Deserialize, Serialize};
-use bincode::deserialize_from;
+use codec::{Encode, Decode};
 
-#[derive(Deserialize, Serialize, Debug)]
+
+
+#[derive(Encode, Decode, Debug)]
 struct Job {
     company:String,
     from:String,
     to:String,
     title:String
 }
-#[derive(Deserialize, Serialize, Debug)]
+
+#[derive(Encode, Decode, Debug)]
 enum TechStack {
     Javascript,
     Rust,
     Devops
 }
 
+#[derive(Encode, Decode, Debug, Eq, PartialOrd, Ord, PartialEq)]
+pub struct Id {
+    id: i32
+}
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Encode, Decode, Debug)]
 pub struct Person {
-    id: i32,
+    id: Id,
     name: String,
     lastname: String,
     jobs: Vec<Job>,
     tech_stack: Vec<TechStack>
 }
+
+
 
 pub struct DBQuery {
     pub db_connection: DBConnection,
@@ -34,14 +44,21 @@ pub struct DBQuery {
 
 
 impl DBQuery {
-    fn open(&self) -> (HashMap<i32, Person>, i32) {
-        let db: HashMap<i32, Person> = if self.db_connection.new == true {
-            HashMap::new()
+    fn open(&mut self) -> (BTreeMap<Id, Person>, Id) {
+        
+        let db: BTreeMap<Id, Person> = if self.db_connection.new == true {  
+            BTreeMap::new()
         } else {
-            let file = &self.db_connection.db;
-            deserialize_from(file).unwrap()
+/*             let db_file = &
+            let file = Decode::decode(input)
+            bincode::deserialize(file).unwrap() */
+            let mut buf:Vec<u8> = vec![]; 
+            let file = self.db_connection.db_file.read_to_end(&mut buf).unwrap();
+            let db = BTreeMap::decode(&mut buf).unwrap();
+            db
         };
-        let current_id = db.len().try_into().unwrap();
+        let current_id = Id { id: 1};
+        println!("DB Before updating ${:?}: ", db);
         (db, current_id)
     }
 
@@ -70,7 +87,7 @@ impl DBQuery {
         let (mut db_updated, last_id) = self.open();
 
         let new_person = Person {
-            id: last_id +1, 
+            id: Id {id: last_id.id +1 }, 
             name,
             lastname,
             jobs,
@@ -79,16 +96,15 @@ impl DBQuery {
 
         println!("new_person ${:?}: ",new_person);
 
-        println!("DB Before updating ${:?}: ",db_updated);
-        db_updated.insert(last_id+1,new_person);
+        db_updated.insert(Id {id: last_id.id +1 },new_person);
+
         println!("DB After updating ${:?}: ",db_updated);
-        self.db_connection.write_to_db(db_updated);
+        self.db_connection.write_to_db(db_updated); 
     }
 
     pub fn show(&self){
         let (db_updated, last_id) = self.open();
         println!("${:?}: ",db_updated);
-        println!("Records :${}",last_id);
     }
 
     pub fn delete(&mut self,registry: &String){

@@ -13,20 +13,26 @@ TO DO");
 fn main() {
 
     let args: Vec<String> = env::args().collect();
-    println!("args: {:?}",args);
     let db_connection = DBConnection::init_db(&args[1]);
-    let mut query = DBQuery{ db_connection };
-    println!("args leng: {}",args.len());
+    let mut query = DBQuery{ db_connection }; 
     match args.len() {
         3 => {
-            println!("Try passing some arguments!");
-            help();
+            let cmd = &args[2];
+            
+            match &cmd[..] {
+                "show" => query.show(),
+                _ => {
+                    eprintln!("Missing arguments");
+                    help();
+                },
+            }
+
         },
         // one argument passed
         4 => {
             let cmd = &args[2];
             let registry = &args[3];
-            println!("CMD: {:?}", &cmd[..]);
+
             // parse the command
             match &cmd[..] {
                 "add" => query.add(registry),

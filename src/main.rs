@@ -1,8 +1,7 @@
 use std::env;
-use std::fs::{File};
-use std::io::Write;
-use db_handler::init::{init_db};
-use db_handler::crud::add;
+use db_handler::connection::{DBConnection,DBCalls};
+use db_handler::query::{DBQuery};
+
 
 fn help() {
     println!("usage:
@@ -15,8 +14,8 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     println!("args: {:?}",args);
-
-    let db = init_db(&args[1]);
+    let db_connection = DBConnection::init_db(&args[1]);
+    let mut query = DBQuery{ db_connection };
     println!("args leng: {}",args.len());
     match args.len() {
         3 => {
@@ -30,8 +29,8 @@ fn main() {
             println!("CMD: {:?}", &cmd[..]);
             // parse the command
             match &cmd[..] {
-                "add" => add(db,registry),
-                "delete" => println!("To delete a new registry in the DB"),
+                "add" => query.add(registry),
+                "delete" => query.delete(registry),
                 _ => {
                     eprintln!("error: invalid command");
                     help();

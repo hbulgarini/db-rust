@@ -5,10 +5,28 @@ version = 3
 [[package]]
 name = "db-handler"
 version = "0.1.0"
+dependencies = [
+ "serde_bytes",
+]
 
 [[package]]
 name = "db-rust"
 version = "0.1.0"
 dependencies = [
  "db-handler",
+]
+
+[[package]]
+name = "serde"
+version = "1.0.137"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212e73464ebcde48d723aa02eb270ba62eff38a9b732df31f33f1b4e145f3a54"
+dependencies = [
+ "serde",
 ]

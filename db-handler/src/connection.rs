@@ -22,16 +22,17 @@ impl DBCalls for DBConnection {
         println!("Calling init...");
         let db_name = format!("{}.db",name);
 
-        let db_file = OpenOptions::new()
+         let db_file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
             .open(&db_name)
-            .unwrap();
+            .unwrap(); 
         
         let metadata = db_file.metadata().unwrap();
         let new = if metadata.len() == 0 { true } else { false };
         println!("DB new: {}",new);
+
         DBConnection {
             db_file,
             db_name,
@@ -43,8 +44,7 @@ impl DBCalls for DBConnection {
         let encoded = db_updated.encode();
         println!("write_to_db ${:?}",db_updated);
 
-        self.db_file.write_all(&encoded).unwrap();
-        self.db_file.sync_all().expect("i died");
+        self.db_file.write(&encoded).unwrap();
     }
 }
 

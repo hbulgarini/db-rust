@@ -46,20 +46,17 @@ impl DBQuery {
     fn open(&mut self) -> (BTreeMap<Id, Person>, Id) {
         
         if self.db_connection.new == true {  
-            return (BTreeMap::new(), Id { id: 1});
+            return (BTreeMap::new(), Id { id:  0});
         } else {
             let mut buf:Vec<u8> = vec![]; 
             let file = self.db_connection.db_file.read_to_end(&mut buf).unwrap();
             let mut input = &buf[..];
 
             let db = BTreeMap::decode(&mut input).unwrap();
-            println!("db get {:?}",db.get(&Id {id:1}));
 
-            let next_id = db.len() as i32+1;
-            println!("db {:?}",db);
-            println!("next_id {:?}",next_id);
-
-            return (db, Id { id: next_id  });
+            let current_id = db.len();
+            println!("current_id: ${}",current_id);
+            return (db, Id { id: current_id as i32  });
         };
     }
 
@@ -86,9 +83,9 @@ impl DBQuery {
         }
 
         let (mut db_updated, last_id) = self.open();
-
+        let next_id = last_id.id +1 ;
         let new_person = Person {
-            id: Id {id: last_id.id }, 
+            id: Id {id: next_id }, 
             name,
             lastname,
             jobs,
@@ -97,7 +94,7 @@ impl DBQuery {
 
         println!("new_person ${:?}: ",new_person);
 
-        db_updated.insert(Id {id: last_id.id  },new_person);
+        db_updated.insert(Id {id: next_id},new_person);
 
         println!("DB After updating ${:?}: ",db_updated);
         self.db_connection.write_to_db(db_updated); 
@@ -105,7 +102,7 @@ impl DBQuery {
 
     pub fn show(&mut self){
         let (db_updated, _last_id) = self.open();
-        println!("Show: ${:?}: ",db_updated);
+        println!("Show: ${:?} ",db_updated);
     }
 
     pub fn delete(&mut self,registry: &String){

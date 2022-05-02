@@ -19,7 +19,9 @@ pub struct DBConnection {
 
 impl DBCalls for DBConnection {
    fn init_db(name: &String) -> DBConnection {
+        println!("Calling init...");
         let db_name = format!("{}.db",name);
+
         let db_file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -39,8 +41,10 @@ impl DBCalls for DBConnection {
     
     fn write_to_db(&mut self,db_updated: BTreeMap<Id, Person>) {
         let encoded = db_updated.encode();
-        self.db_file.write_all(&encoded).unwrap();
+        println!("write_to_db ${:?}",db_updated);
 
+        self.db_file.write_all(&encoded).unwrap();
+        self.db_file.sync_all().expect("i died");
     }
 }
 

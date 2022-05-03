@@ -1,5 +1,5 @@
 
 
-struct WorkingData {
-    
+struct _WorkingData {
+
 }

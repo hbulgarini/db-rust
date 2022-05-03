@@ -1,6 +1,5 @@
 use crate::connection::{DBConnection, DBCalls};
-use std::{collections::BTreeMap, io::Read, io::Write};
-use std::io::BufWriter;
+use std::{collections::BTreeMap, io::Read};
 use std::fmt::Debug;
 use codec::{Encode, Decode};
 
@@ -44,12 +43,12 @@ pub struct DBQuery {
 
 impl DBQuery {
     fn open(&mut self) -> (BTreeMap<Id, Person>, Id) {
-        
-        if self.db_connection.new == true {  
+
+        if self.db_connection.new == true {
             return (BTreeMap::new(), Id { id:  0});
         } else {
-            let mut buf:Vec<u8> = vec![]; 
-            let file = self.db_connection.db_file.read_to_end(&mut buf).unwrap();
+            let mut buf:Vec<u8> = vec![];
+            self.db_connection.db_file.read_to_end(&mut buf).unwrap();
             let mut input = &buf[..];
 
             let db = BTreeMap::decode(&mut input).unwrap();
@@ -66,10 +65,10 @@ impl DBQuery {
         let lastname = values[1].to_string();
         let jobs_provided:Vec<&str> = values[2].split(",").collect();
         //let tech_stack:Vec<&str> = values[3].split(",").collect();
-        
+
         let mut jobs:Vec<Job> = Vec::new();
         let jobs_iter = jobs_provided.iter();
-        
+
 
         for job in jobs_iter {
             let values:Vec<&str>= job.split("#").collect();
@@ -85,7 +84,7 @@ impl DBQuery {
         let (mut db_updated, last_id) = self.open();
         let next_id = last_id.id +1 ;
         let new_person = Person {
-            id: Id {id: next_id }, 
+            id: Id {id: next_id },
             name,
             lastname,
             jobs,
@@ -97,7 +96,7 @@ impl DBQuery {
         db_updated.insert(Id {id: next_id},new_person);
 
         println!("DB After updating ${:?}: ",db_updated);
-        self.db_connection.write_to_db(db_updated); 
+        self.db_connection.write_to_db(db_updated);
     }
 
     pub fn show(&mut self){

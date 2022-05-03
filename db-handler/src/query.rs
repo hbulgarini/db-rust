@@ -1,6 +1,6 @@
 use crate::connection::{DBConnection, DBCalls};
 use std::{collections::BTreeMap, io::Read};
-use std::fmt::Debug;
+use std::fmt::{Display,Debug,Formatter};
 use codec::{Encode, Decode};
 
 
@@ -11,6 +11,13 @@ struct Job {
     from:String,
     to:String,
     title:String
+}
+
+impl Display for Job {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut Formatter) -> Result<(),std::fmt::Error> {
+        write!(f, "     Job: Company: {}, From: {}, To: {}, Title: {}", self.company, self.from,self.to,self.title)
+    }
 }
 
 #[derive(Encode, Decode, Debug)]
@@ -34,6 +41,17 @@ pub struct Person {
     tech_stack: Vec<TechStack>
 }
 
+impl Display for Person {
+    fn fmt(&self, f: &mut Formatter) -> Result<(),std::fmt::Error> {
+        let id = self.id.id;
+        write!(f, "Id: {}, Name: {}, Last Name: {}", id, self.name,self.lastname)?;
+        for job in &self.jobs {
+            write!(f,"\n{}", job)?;
+        }
+        write!(f,"")
+    }
+}
+
 
 
 pub struct DBQuery {
@@ -54,7 +72,6 @@ impl DBQuery {
             let db = BTreeMap::decode(&mut input).unwrap();
 
             let current_id = db.len();
-            println!("current_id: ${}",current_id);
             return (db, Id { id: current_id as i32  });
         };
     }
@@ -63,7 +80,7 @@ impl DBQuery {
         let values:Vec<&str>= registry.split(";").collect();
         let name = values[0].to_string();
         let lastname = values[1].to_string();
-        let jobs_provided:Vec<&str> = values[2].split(",").collect();
+        let jobs_provided:Vec<&str> = values[2].split("#").collect();
         //let tech_stack:Vec<&str> = values[3].split(",").collect();
 
         let mut jobs:Vec<Job> = Vec::new();
@@ -71,7 +88,7 @@ impl DBQuery {
 
 
         for job in jobs_iter {
-            let values:Vec<&str>= job.split("#").collect();
+            let values:Vec<&str>= job.split(",").collect();
             let job_entry = Job {
                 company: values[0].to_string(),
                 from: values[1].to_string(),
@@ -91,17 +108,17 @@ impl DBQuery {
             tech_stack: Vec::new()
         };
 
-        println!("new_person ${:?}: ",new_person);
+
 
         db_updated.insert(Id {id: next_id},new_person);
-
-        println!("DB After updating ${:?}: ",db_updated);
         self.db_connection.write_to_db(db_updated);
     }
 
     pub fn show(&mut self){
         let (db_updated, _last_id) = self.open();
-        println!("Show: ${:?} ",db_updated);
+        for (_key, value) in db_updated.into_iter() {
+            println!("{}",value);
+        }
     }
 
     pub fn delete(&mut self,registry: &String){

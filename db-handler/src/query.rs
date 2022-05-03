@@ -1,32 +1,40 @@
 use crate::connection::{DBConnection, DBCalls};
-use std::collections::HashMap;
+use std::{collections::BTreeMap, io::Read};
 use std::fmt::Debug;
-use serde::{Deserialize, Serialize};
-use bincode::deserialize_from;
+use codec::{Encode, Decode};
 
-#[derive(Deserialize, Serialize, Debug)]
+
+
+#[derive(Encode, Decode, Debug)]
 struct Job {
     company:String,
     from:String,
     to:String,
     title:String
 }
-#[derive(Deserialize, Serialize, Debug)]
+
+#[derive(Encode, Decode, Debug)]
 enum TechStack {
     Javascript,
     Rust,
     Devops
 }
 
+#[derive(Encode, Decode, Debug, Eq, PartialOrd, Ord, PartialEq)]
+pub struct Id {
+    id: i32
+}
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Encode, Decode, Debug)]
 pub struct Person {
-    id: i32,
+    id: Id,
     name: String,
     lastname: String,
     jobs: Vec<Job>,
     tech_stack: Vec<TechStack>
 }
+
+
 
 pub struct DBQuery {
     pub db_connection: DBConnection,
@@ -34,15 +42,21 @@ pub struct DBQuery {
 
 
 impl DBQuery {
-    fn open(&self) -> (HashMap<i32, Person>, i32) {
-        let db: HashMap<i32, Person> = if self.db_connection.new == true {
-            HashMap::new()
+    fn open(&mut self) -> (BTreeMap<Id, Person>, Id) {
+
+        if self.db_connection.new == true {
+            return (BTreeMap::new(), Id { id:  0});
         } else {
-            let file = &self.db_connection.db;
-            deserialize_from(file).unwrap()
+            let mut buf:Vec<u8> = vec![];
+            self.db_connection.db_file.read_to_end(&mut buf).unwrap();
+            let mut input = &buf[..];
+
+            let db = BTreeMap::decode(&mut input).unwrap();
+
+            let current_id = db.len();
+            println!("current_id: ${}",current_id);
+            return (db, Id { id: current_id as i32  });
         };
-        let current_id = db.len().try_into().unwrap();
-        (db, current_id)
     }
 
     pub fn add(&mut self,registry: &String){
@@ -51,10 +65,10 @@ impl DBQuery {
         let lastname = values[1].to_string();
         let jobs_provided:Vec<&str> = values[2].split(",").collect();
         //let tech_stack:Vec<&str> = values[3].split(",").collect();
-        
+
         let mut jobs:Vec<Job> = Vec::new();
         let jobs_iter = jobs_provided.iter();
-        
+
 
         for job in jobs_iter {
             let values:Vec<&str>= job.split("#").collect();
@@ -68,9 +82,9 @@ impl DBQuery {
         }
 
         let (mut db_updated, last_id) = self.open();
-
+        let next_id = last_id.id +1 ;
         let new_person = Person {
-            id: last_id +1, 
+            id: Id {id: next_id },
             name,
             lastname,
             jobs,
@@ -79,16 +93,15 @@ impl DBQuery {
 
         println!("new_person ${:?}: ",new_person);
 
-        println!("DB Before updating ${:?}: ",db_updated);
-        db_updated.insert(last_id+1,new_person);
+        db_updated.insert(Id {id: next_id},new_person);
+
         println!("DB After updating ${:?}: ",db_updated);
         self.db_connection.write_to_db(db_updated);
     }
 
-    pub fn show(&self){
-        let (db_updated, last_id) = self.open();
-        println!("${:?}: ",db_updated);
-        println!("Records :${}",last_id);
+    pub fn show(&mut self){
+        let (db_updated, _last_id) = self.open();
+        println!("Show: ${:?} ",db_updated);
     }
 
     pub fn delete(&mut self,registry: &String){

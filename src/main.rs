@@ -18,7 +18,7 @@ fn main() {
             let cmd = &args[2];
 
             match &cmd[..] {
-                "show" => query.show(),
+                "show_all" => query.show_all(),
                 _ => {
                     eprintln!("Missing arguments");
                     help();
@@ -33,7 +33,29 @@ fn main() {
             // parse the command
             match &cmd[..] {
                 "add" => query.add(registry),
+                "update" => {
+                    eprintln!("error: Missing ID or Row parameter");
+                    help();
+                }
+                "show" => println!(
+                    "Add this function by Id. query.show function should recieve an Option<DB>"
+                ),
                 "delete" => query.delete(registry),
+                _ => {
+                    eprintln!("error: invalid command");
+                    help();
+                }
+            }
+        }
+        5 => {
+            let cmd = &args[2];
+            let id_str = &args[3];
+            let id: u32 = id_str.parse().unwrap();
+
+            let registry = &args[4];
+            // parse the command
+            match &cmd[..] {
+                "update" => query.update(id, registry),
                 _ => {
                     eprintln!("error: invalid command");
                     help();

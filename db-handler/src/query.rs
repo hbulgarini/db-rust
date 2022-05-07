@@ -113,7 +113,7 @@ impl DBQuery {
         if let Ok(new_person) = DBQuery::generate_person(&registry) {
             db_updated.insert(next_id.clone(), new_person);
             self.db_connection.write_to_db(&db_updated);
-            self.show(&db_updated, &next_id);
+            self.show(Some(&db_updated), &next_id);
         }
     }
 
@@ -146,7 +146,7 @@ impl DBQuery {
             println!("Updating row with id: {}", &id.id);
             db.insert(id.clone(), udpated_row.clone());
             self.db_connection.write_to_db(&db);
-            self.show(&db, &id);
+            self.show(Some(&db), &id);
         }
     }
 

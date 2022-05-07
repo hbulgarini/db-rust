@@ -33,7 +33,7 @@ enum TechStack {
 
 #[derive(Encode, Decode, Debug, Eq, PartialOrd, Ord, PartialEq, Clone)]
 pub struct Id {
-    id: u32,
+    pub id: u32,
 }
 
 #[derive(Encode, Decode, Debug, Clone)]
@@ -124,8 +124,16 @@ impl DBQuery {
         }
     }
 
-    pub fn show(&mut self, db: &DB, id: &Id) {
-        println!("Row Id: {} Data: {:?}", id.id, db.get(&id));
+    pub fn show(&mut self, db: Option<&DB>, id: &Id) {
+        match db {
+            Some(db) => {
+                println!("Row Id: {} Data: {:?}", id.id, db.get(&id));
+            }
+            None => {
+                let (db, _last_id) = self.open();
+                println!("Row Id: {} Data: {:?}", id.id, db.get(&id));
+            }
+        }
     }
 
     pub fn update(&mut self, id: u32, update: &str) {

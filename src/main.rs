@@ -1,5 +1,5 @@
 use db_handler::connection::{DBCalls, DBConnection};
-use db_handler::query::DBQuery;
+use db_handler::query::{DBQuery, Id};
 use std::env;
 
 fn help() {
@@ -37,9 +37,12 @@ fn main() {
                     eprintln!("error: Missing ID or Row parameter");
                     help();
                 }
-                "show" => println!(
-                    "Add this function by Id. query.show function should recieve an Option<DB>"
-                ),
+                "show" => {
+                    let id_str = &args[3];
+                    let id_parsed: u32 = id_str.parse().unwrap();
+                    let id = Id { id: id_parsed };
+                    query.show(None, &id)
+                }
                 "delete" => query.delete(registry),
                 _ => {
                     eprintln!("error: invalid command");

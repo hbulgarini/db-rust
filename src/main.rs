@@ -11,7 +11,14 @@ TO DO"
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let db_connection = DBConnection::init_db(&args[1]);
+    let db_file_name = &args.get(1);
+    if db_file_name.is_none() {
+        help();
+        std::process::exit(1);
+    };
+
+    // unwrap here is `safe` because of the previuos check
+    let db_connection = DBConnection::init_db(db_file_name.unwrap());
     let mut query = DBQuery { db_connection };
     match args.len() {
         3 => {
@@ -50,7 +57,7 @@ fn main() {
         5 => {
             let cmd = &args[2];
             let id_str = &args[3];
-            let id: u32 = id_str.parse().unwrap();
+            let id: u32 = id_str.parse().expect("Invalid u32 id");
 
             let registry = &args[4];
             // parse the command

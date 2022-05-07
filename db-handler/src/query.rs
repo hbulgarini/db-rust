@@ -13,7 +13,7 @@ struct Job {
 
 impl Display for Job {
     // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(
             f,
             "     Job: Company: {}, From: {}, To: {}, Title: {}",
@@ -45,7 +45,7 @@ pub struct Person {
 }
 
 impl Display for Person {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "Name: {}, Last Name: {}", self.name, self.lastname)?;
         for job in &self.jobs {
             write!(f, "\n{}", job)?;
@@ -60,7 +60,7 @@ pub struct DBQuery {
 
 impl DBQuery {
     fn open(&mut self) -> (DB, Id) {
-        if self.db_connection.new == true {
+        if self.db_connection.new {
             return (DB::new(), Id { id: 0 });
         } else {
             let mut buf: Vec<u8> = vec![];
@@ -79,45 +79,42 @@ impl DBQuery {
         };
     }
 
-    fn generate_person(registry: &String) -> Person {
+    fn generate_person(registry: &str) -> Result<Person,()> {
         let values: Vec<&str> = registry.split(";").collect();
-        let name = values[0].to_string();
-        let lastname = values[1].to_string();
-        let jobs_provided: Vec<&str> = values[2].split("#").collect();
-        //let tech_stack:Vec<&str> = values[3].split(",").collect();
+        if let [name, lastname, job_provided] = &values[..] {
+            let jobs = job_provided.split("#").collect::<Vec<&str>>().iter().map(|job| {
+                let values: Vec<&str> = job.split(",").collect();
+                Job {
+                    company: values.get(0).unwrap_or(&"").to_string(),
+                    from: values.get(1).unwrap_or(&"").to_string(),
+                    to: values.get(2).unwrap_or(&"").to_string(),
+                    title: values.get(3).unwrap_or(&"").to_string(),
+                }
+            }).collect::<Vec<Job>>();
 
-        let mut jobs: Vec<Job> = Vec::new();
-        let jobs_iter = jobs_provided.iter();
-
-        for job in jobs_iter {
-            let values: Vec<&str> = job.split(",").collect();
-            let job_entry = Job {
-                company: values[0].to_string(),
-                from: values[1].to_string(),
-                to: values[2].to_string(),
-                title: values[3].to_string(),
+            let person = Person {
+                name: name.to_string(),
+                lastname: lastname.to_string(),
+                jobs,
+                tech_stack: Vec::new(),
             };
-            jobs.push(job_entry);
+
+            Ok(person)
+        } else {
+            eprintln!("Invalid registry!");
+            Err(())
         }
-
-        let person = Person {
-            name,
-            lastname,
-            jobs,
-            tech_stack: Vec::new(),
-        };
-
-        person
     }
 
-    pub fn add(&mut self, registry: &String) {
+    pub fn add(&mut self, registry: &str) {
         let (mut db_updated, last_id) = self.open();
 
         let next_id = Id { id: last_id.id + 1 };
-        let new_person = DBQuery::generate_person(&registry);
-        db_updated.insert(next_id.clone(), new_person);
-        self.db_connection.write_to_db(&db_updated);
-        self.show(&db_updated, &next_id);
+        if let Ok(new_person) = DBQuery::generate_person(&registry) {
+            db_updated.insert(next_id.clone(), new_person);
+            self.db_connection.write_to_db(&db_updated);
+            self.show(&db_updated, &next_id);
+        }
     }
 
     pub fn show_all(&mut self) {
@@ -131,20 +128,21 @@ impl DBQuery {
         println!("Row Id: {} Data: {:?}", id.id, db.get(&id));
     }
 
-    pub fn update(&mut self, id: u32, update: &String) {
+    pub fn update(&mut self, id: u32, update: &str) {
         let (mut db, last_id) = self.open();
         if id >= last_id.id + 1 {
             panic!("No existing record with that Id");
         }
         let id = Id { id };
-        let udpated_row = DBQuery::generate_person(&update);
-        println!("Updating row with id: {}", &id.id);
-        db.insert(id.clone(), udpated_row.clone());
-        self.db_connection.write_to_db(&db);
-        self.show(&db, &id);
+        if let Ok(udpated_row) = DBQuery::generate_person(&update) {
+            println!("Updating row with id: {}", &id.id);
+            db.insert(id.clone(), udpated_row.clone());
+            self.db_connection.write_to_db(&db);
+            self.show(&db, &id);
+        }
     }
 
-    pub fn delete(&mut self, registry: &String) {
+    pub fn delete(&mut self, registry: &str) {
         println!("Delete registry {}", registry);
     }
 }

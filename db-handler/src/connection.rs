@@ -27,8 +27,8 @@ impl DBCalls for DBConnection {
             .read(true)
             .write(true)
             .create(true)
-            .open(&db_name)
-            .unwrap();
+            .open(&db_name).expect(&format!("Can't open the file: {}", &db_name));
+
 
         let metadata = db_file.metadata().unwrap();
         let new = if metadata.len() == 0 { true } else { false };

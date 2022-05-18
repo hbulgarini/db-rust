@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 db-handler = { path= "db-handler"}
+serde_json = "1.0.80"

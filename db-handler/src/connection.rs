@@ -40,31 +40,6 @@ impl<'a> DBCalls<'a> for DBConnection {
         }
     }
 
-    // fn open(&mut self) -> (DB<'static>, Id) {
-    //     if self.new == true {
-    //         return (DB::new(), Id { id: 0 });
-    //     } else {
-    //         let mut content = String::new();
-    //         self.db_file.read_to_string(&mut content).expect("can't read file!");
-    //         // let mut buf: Vec<u8> = vec![];
-
-    //         // {
-    //         //     self.db_file.read_to_end(&mut buf).unwrap();
-    //         // }
-    //         // let input = &buf[..];
-
-    //         let db: DB = serde_json::from_str(&content).expect("can't decode json!");
-
-    //         let current_id = db.len();
-    //         return (
-    //             db,
-    //             Id {
-    //                 id: current_id as u32,
-    //             },
-    //         );
-    //     };
-    // }
-
     fn write_to_db(&mut self, db_updated: &DB) {
         //let encoded = db_updated.encode();
         println!("{:?}", &db_updated);

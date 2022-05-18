@@ -1,4 +1,3 @@
-//use crate::connection::{DBCalls, DBConnection};
 //use codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
@@ -57,48 +56,6 @@ pub struct DBQuery<'a> {
     pub db: DB<'a>
 }
 
-// <<<<<<< Updated upstream
-// impl DBQuery {
-//     fn open(&mut self) -> (DB, Id) {
-//         if self.db_connection.new {
-//             return (DB::new(), Id { id: 0 });
-//         } else {
-//             let mut buf: Vec<u8> = vec![];
-//             self.db_connection.db_file.read_to_end(&mut buf).unwrap();
-//             let mut input = &buf[..];
-
-//             let db = DB::decode(&mut input).unwrap();
-
-//             let current_id = db.len();
-//             return (
-//                 db,
-//                 Id {
-//                     id: current_id as u32,
-//                 },
-//             );
-//         };
-//     }
-
-//     fn generate_person(registry: &str) -> Result<Person,()> {
-//         let values: Vec<&str> = registry.split(";").collect();
-//         if let [name, lastname, job_provided] = &values[..] {
-//             let jobs = job_provided.split("#").collect::<Vec<&str>>().iter().map(|job| {
-//                 let values: Vec<&str> = job.split(",").collect();
-//                 Job {
-//                     company: values.get(0).unwrap_or(&"").to_string(),
-//                     from: values.get(1).unwrap_or(&"").to_string(),
-//                     to: values.get(2).unwrap_or(&"").to_string(),
-//                     title: values.get(3).unwrap_or(&"").to_string(),
-//                 }
-//             }).collect::<Vec<Job>>();
-
-//             let person = Person {
-//                 name: name.to_string(),
-//                 lastname: lastname.to_string(),
-//                 jobs,
-//                 tech_stack: Vec::new(),
-//             };
-// =======
 impl<'a> DBQuery<'a> {
     fn generate_person(registry: &'a str) -> Result<Person<'a>,()> {
         let values: Vec<&str> = registry.split(";").collect();

@@ -1,14 +1,13 @@
-use codec::Encode;
-use std::collections::BTreeMap;
-use std::io::Seek;
-use std::{fs::File, io::Write};
+//use codec::Encode;
+use std::io::{Seek, Write};
+use std::{fs::File};
 
-use crate::query::{Id, Person};
+use crate::query::{DB};
 use std::fs::OpenOptions;
 
-pub trait DBCalls {
+pub trait DBCalls<'a> {
     fn init_db(name: &String) -> DBConnection;
-    fn write_to_db(&mut self, map: &BTreeMap<Id, Person>);
+    fn write_to_db(&mut self, map: &DB);
 }
 
 #[derive(Debug)]
@@ -18,7 +17,7 @@ pub struct DBConnection {
     pub new: bool,
 }
 
-impl DBCalls for DBConnection {
+impl<'a> DBCalls<'a> for DBConnection {
     fn init_db(name: &String) -> DBConnection {
         println!("Calling init...");
         let db_name = format!("{}.db", name);
@@ -41,11 +40,13 @@ impl DBCalls for DBConnection {
         }
     }
 
-    fn write_to_db(&mut self, db_updated: &BTreeMap<Id, Person>) {
-        let encoded = db_updated.encode();
+    fn write_to_db(&mut self, db_updated: &DB) {
+        //let encoded = db_updated.encode();
+        println!("{:?}", &db_updated);
+        let db_json = serde_json::to_string(db_updated).expect("can't encode db as json!");
         self.db_file
             .seek(std::io::SeekFrom::Start(0))
             .expect("can't rewind the cursor");
-        self.db_file.write(&encoded).unwrap();
+        self.db_file.write(db_json.as_bytes()).expect("can't write file!");
     }
 }
